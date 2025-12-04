@@ -1,0 +1,5 @@
+module.exports = {
+    OUTLOOK_EMAIL: "YOUR_OUTLOOK_EMAIL@example.com",
+    OUTLOOK_PASS: "YOUR_APP_PASSWORD",
+    ALERT_RECIPIENT: "warehouse-alerts@example.com"
+};
