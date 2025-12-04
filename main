@@ -1,0 +1,32 @@
+Stock-tracker-and-Inventory-barcode-system/
+│
+├── server.js
+├── package.json
+├── README.md
+├── .gitignore
+├── config.js
+├── database.db (auto-created)
+│
+├── email/
+│   └── transporter.js
+│
+├── routes/
+│   ├── parts.js
+│   ├── serials.js
+│   ├── usage.js
+│   ├── import.js
+│   ├── reports.js
+│
+├── middleware/
+│   └── auth.js   (disabled – unused, left for future)
+│
+└── public/
+    ├── index.html
+    ├── dashboard.html
+    ├── import.html
+    ├── style.css
+    ├── app.js
+    ├── dashboard.js
+    ├── import.js
+    ├── jsbarcode.min.js
+    └── jspdf.umd.min.js
