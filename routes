@@ -1,0 +1,53 @@
+const express = require("express");
+const transporter = require("../email/transporter");
+const cfg = require("../config");
+
+module.exports = function (db) {
+    const router = express.Router();
+
+    router.get("/", (req, res) => {
+        db.all("SELECT * FROM parts", [], (err, rows) => {
+            if (err) return res.status(500).json(err);
+            res.json(rows);
+        });
+    });
+
+    router.post("/", (req, res) => {
+        const { PartNumber, Description, BarcodeValue, SerialRequired, QuantityOnHand, MinStockLevel, Location } = req.body;
+
+        db.run(
+            `INSERT INTO parts VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [PartNumber, Description, BarcodeValue, SerialRequired, QuantityOnHand, MinStockLevel, Location],
+            err => {
+                if (err) return res.status(400).json(err);
+                res.json({ success: true });
+            }
+        );
+    });
+
+    router.post("/update-qty", (req, res) => {
+        const { PartNumber, Change } = req.body;
+
+        db.get(`SELECT * FROM parts WHERE PartNumber=?`, [PartNumber], (err, part) => {
+            if (!part) return res.status(404).json({ error: "Part not found" });
+
+            const newQty = part.QuantityOnHand + Change;
+
+            db.run(`UPDATE parts SET QuantityOnHand=? WHERE PartNumber=?`, [newQty, PartNumber]);
+
+            // LOW STOCK EMAIL
+            if (newQty < part.MinStockLevel) {
+                transporter.sendMail({
+                    from: cfg.OUTLOOK_EMAIL,
+                    to: cfg.ALERT_RECIPIENT,
+                    subject: "Low Stock Alert",
+                    text: `Part ${PartNumber} is below minimum stock. Qty: ${newQty}`
+                });
+            }
+
+            res.json({ success: true, newQty });
+        });
+    });
+
+    return router;
+};
