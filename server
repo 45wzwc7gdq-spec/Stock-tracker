@@ -1,0 +1,71 @@
+const express = require("express");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const sqlite3 = require("sqlite3").verbose();
+const path = require("path");
+
+const app = express();
+const PORT = 3000;
+
+app.use(cors());
+app.use(bodyParser.json());
+app.use(express.static("public"));
+
+// Database init
+const db = new sqlite3.Database("./database.db");
+
+// Create tables
+db.serialize(() => {
+    db.run(`
+      CREATE TABLE IF NOT EXISTS parts (
+        PartNumber TEXT PRIMARY KEY,
+        Description TEXT,
+        BarcodeValue TEXT,
+        SerialRequired INTEGER,
+        QuantityOnHand INTEGER,
+        MinStockLevel INTEGER,
+        Location TEXT
+      )
+    `);
+
+    db.run(`
+      CREATE TABLE IF NOT EXISTS serials (
+        SerialNumber TEXT PRIMARY KEY,
+        PartNumber TEXT,
+        BarcodeValue TEXT,
+        Status TEXT,
+        DateReceived TEXT,
+        DateUsed TEXT
+      )
+    `);
+
+    db.run(`
+      CREATE TABLE IF NOT EXISTS usage (
+        ID INTEGER PRIMARY KEY AUTOINCREMENT,
+        Date TEXT,
+        User TEXT,
+        PartNumber TEXT,
+        SerialNumber TEXT,
+        QtyUsed INTEGER,
+        RemainingStock INTEGER
+      )
+    `);
+});
+
+// Routes
+const partRoutes = require("./routes/parts")(db);
+const serialRoutes = require("./routes/serials")(db);
+const usageRoutes = require("./routes/usage")(db);
+const importRoutes = require("./routes/import")(db);
+const reportsRoutes = require("./routes/reports")(db);
+
+app.use("/api/parts", partRoutes);
+app.use("/api/serials", serialRoutes);
+app.use("/api/usage", usageRoutes);
+app.use("/api/import", importRoutes);
+app.use("/api/reports", reportsRoutes);
+
+// Start server
+app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+});
